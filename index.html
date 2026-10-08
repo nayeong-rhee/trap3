@@ -1,0 +1,4743 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Venus Flytrap</title>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,600;0,800;0,900;1,800;1,900&display=swap');
+
+:root {
+  --lime:#c9ff53;
+  --green:#7fcb3f;
+  --deep:#355c27;
+  --pink:#ff72bb;
+  --hotpink:#f04499;
+  --cream:#fffff1;
+}
+
+* {
+  box-sizing:border-box;
+  user-select:none;
+  -webkit-user-select:none;
+}
+
+html,body {
+  margin:0;
+  width:100%;
+  height:100%;
+  overflow:hidden;
+  font-family:'DM Sans','Apple SD Gothic Neo',sans-serif;
+}
+
+body {
+  background:var(--cream);
+}
+
+button {
+  font:inherit;
+  border:0;
+  cursor:pointer;
+}
+
+/* ====================================
+   GAME BACKGROUND
+==================================== */
+
+#game {
+  position:relative;
+  width:100vw;
+  height:100dvh;
+  overflow:hidden;
+  cursor:none;
+
+  background:
+    radial-gradient(
+      ellipse at 50% 45%,
+      #fff 0 16%,
+      #fff7fc 37%,
+      transparent 70%
+    ),
+    radial-gradient(
+      circle at 5% 87%,
+      #d7ff9c99,
+      transparent 34%
+    ),
+    radial-gradient(
+      circle at 94% 20%,
+      #ffcde866,
+      transparent 32%
+    ),
+    linear-gradient(
+      135deg,
+      #e5ffc1,
+      #fff4fb 52%,
+      #efffd7
+    );
+}
+
+#game::before {
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+
+  background-image:
+    radial-gradient(
+      circle,
+      rgba(117,185,50,.18) 1.5px,
+      transparent 2px
+    );
+
+  background-size:40px 40px;
+  opacity:.32;
+}
+
+#game.modal-open,
+#game.modal-open * {
+  cursor:default;
+}
+
+#game.modal-open button {
+  cursor:pointer;
+}
+
+#stage,
+#decorLayer,
+#objectLayer {
+  position:absolute;
+  inset:0;
+}
+
+#stage {
+  z-index:1;
+}
+
+#decorLayer {
+  z-index:2;
+  overflow:hidden;
+  pointer-events:none;
+}
+
+#objectLayer {
+  z-index:14;
+  pointer-events:none;
+}
+
+/* ====================================
+   BACKGROUND DECORATIONS
+==================================== */
+
+.decor {
+  position:absolute;
+  object-fit:contain;
+  opacity:.25;
+
+  transform:
+    translate(-50%,-50%)
+    rotate(var(--rotation,0deg));
+
+  filter:blur(1.3px);
+}
+
+.bgDot {
+  position:absolute;
+  border-radius:50%;
+  pointer-events:none;
+  opacity:.4;
+
+  background:
+    radial-gradient(
+      circle,
+      #ff91cb 0 28%,
+      #d2ff68 35% 65%,
+      transparent 74%
+    );
+}
+
+.pollen {
+  position:absolute;
+  border-radius:50%;
+  pointer-events:none;
+  background:white;
+  box-shadow:0 0 10px white;
+  opacity:.55;
+
+  animation:
+    pollenFloat var(--duration)
+    ease-in-out infinite alternate;
+}
+
+@keyframes pollenFloat {
+  from {
+    transform:translateY(0);
+    opacity:.22;
+  }
+
+  to {
+    transform:translateY(-22px);
+    opacity:.75;
+  }
+}
+
+.backgroundRing {
+  position:absolute;
+  border:2px solid rgba(151,214,67,.13);
+  border-radius:50%;
+  pointer-events:none;
+}
+
+.backgroundRing.pink {
+  border-color:rgba(255,116,188,.12);
+}
+
+.leafDecor {
+  position:absolute;
+  width:75px;
+  height:110px;
+  border-radius:100% 0 100% 0;
+
+  background:
+    linear-gradient(
+      135deg,
+      #b8f16866,
+      #edffc633
+    );
+
+  transform:rotate(var(--leafRotation));
+  filter:blur(1px);
+  opacity:.36;
+  pointer-events:none;
+}
+
+/* ====================================
+   MAIN VENUS FLYTRAP
+==================================== */
+
+#trapGlow {
+  position:absolute;
+  z-index:4;
+
+  left:50%;
+  top:51%;
+
+  width:75vmin;
+  height:75vmin;
+
+  border-radius:50%;
+  transform:translate(-50%,-50%);
+
+  background:
+    radial-gradient(
+      circle,
+      #ff83c433,
+      #c9ff5322 47%,
+      transparent 75%
+    );
+
+  filter:blur(27px);
+  pointer-events:none;
+}
+
+#trap {
+  position:absolute;
+  z-index:6;
+
+  left:50%;
+
+  width:clamp(
+    330px,
+    min(58vw,70vh),
+    740px
+  );
+
+  transform:translateX(-50%);
+  pointer-events:none;
+}
+
+#trap img {
+  display:block;
+  width:100%;
+  height:auto;
+
+  transform-origin:50% 24.5%;
+  will-change:transform;
+
+  filter:
+    drop-shadow(
+      0 12px 18px #87bb4c25
+    );
+}
+
+/* 연속 숨쉬기 모션 */
+
+#game.playing #trap img {
+  animation:
+    continuousBreathing 2.4s
+    ease-in-out infinite alternate;
+}
+
+@keyframes continuousBreathing {
+  from {
+    transform:scaleX(1) scaleY(1);
+  }
+
+  to {
+    transform:scaleX(1.055) scaleY(1.035);
+  }
+}
+
+#game.playing #trapGlow {
+  animation:
+    breathingGlow 2.4s
+    ease-in-out infinite alternate;
+}
+
+@keyframes breathingGlow {
+  from {
+    opacity:.55;
+    scale:1;
+  }
+
+  to {
+    opacity:.95;
+    scale:1.14;
+  }
+}
+
+/* ====================================
+   VENUS LETTERING
+==================================== */
+
+.venus-logo {
+  display:inline-flex;
+  flex-direction:column;
+  align-items:center;
+
+  font-family:'DM Sans',sans-serif;
+  font-style:italic;
+  font-weight:900;
+  text-align:center;
+
+  transform:skew(-7deg);
+}
+
+.venus-logo .logo-top {
+  font-size:.23em;
+  letter-spacing:.42em;
+  font-weight:900;
+  color:var(--deep);
+  margin-bottom:-.08em;
+}
+
+.venus-logo .logo-main {
+  font-size:1em;
+  font-weight:900;
+  line-height:.95;
+  letter-spacing:-.09em;
+
+  color:var(--lime);
+
+  -webkit-text-stroke:
+    .035em var(--deep);
+
+  paint-order:stroke fill;
+
+  text-shadow:
+    .035em .035em 0 white,
+    .075em .075em 0 var(--pink),
+    .105em .105em 0 var(--hotpink);
+}
+
+.venus-logo .logo-bottom {
+  align-self:flex-end;
+  margin-right:.07em;
+  font-size:.4em;
+  font-weight:900;
+  line-height:1;
+  letter-spacing:-.07em;
+  color:white;
+
+  -webkit-text-stroke:
+    .055em var(--hotpink);
+
+  paint-order:stroke fill;
+
+  text-shadow:
+    .055em .055em 0 var(--deep);
+}
+
+/* 게임 내 좌측 상단 로고 */
+
+.logo-small {
+  font-size:clamp(60px,6.8vw,96px);
+}
+
+/* 시작/레벨 클리어 화면 로고 */
+
+.logo-large {
+  font-size:clamp(65px,11vw,130px);
+}
+
+/* ====================================
+   FLY
+==================================== */
+
+#fly {
+  position:absolute;
+  z-index:30;
+  width:58px;
+  height:54px;
+
+  transform:translate(-50%,-50%);
+  pointer-events:none;
+  overflow:visible;
+}
+
+.wing {
+  position:absolute;
+  z-index:1;
+  top:8px;
+
+  width:31px;
+  height:19px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #fff,
+      #f2ffd6 60%,
+      #d5ff96
+    );
+
+  border:2px solid #79b94a;
+
+  box-shadow:
+    0 0 8px white,
+    0 0 8px #b9ef74;
+
+  opacity:.98;
+}
+
+.wing-left {
+  right:calc(50% + 2px);
+  border-radius:85% 25% 75% 20%;
+  transform-origin:100% 85%;
+
+  animation:
+    flutterLeft .11s
+    ease-in-out infinite alternate;
+}
+
+.wing-right {
+  left:calc(50% + 2px);
+  border-radius:25% 85% 20% 75%;
+  transform-origin:0% 85%;
+
+  animation:
+    flutterRight .11s
+    ease-in-out infinite alternate;
+}
+
+@keyframes flutterLeft {
+  from {
+    transform:rotate(23deg) scaleY(.8);
+  }
+
+  to {
+    transform:rotate(-30deg) scaleY(1.15);
+  }
+}
+
+@keyframes flutterRight {
+  from {
+    transform:rotate(-23deg) scaleY(.8);
+  }
+
+  to {
+    transform:rotate(30deg) scaleY(1.15);
+  }
+}
+
+.fly-body {
+  position:absolute;
+  z-index:3;
+
+  left:50%;
+  top:54%;
+
+  width:17px;
+  height:26px;
+
+  transform:translate(-50%,-50%);
+  background:#292b27;
+  border-radius:55%;
+
+  box-shadow:0 2px 5px #0004;
+}
+
+.fly-head {
+  position:absolute;
+  z-index:4;
+
+  left:50%;
+  top:18px;
+
+  width:17px;
+  height:16px;
+
+  transform:translateX(-50%);
+  background:#252722;
+  border-radius:50%;
+}
+
+.fly-eye {
+  position:absolute;
+  z-index:5;
+  top:20px;
+
+  width:6px;
+  height:7px;
+
+  border-radius:50%;
+  background:var(--hotpink);
+}
+
+.fly-eye.a {
+  left:20px;
+}
+
+.fly-eye.b {
+  right:20px;
+}
+
+#fly.invincible {
+  animation:
+    flyBlink .14s infinite alternate;
+}
+
+@keyframes flyBlink {
+  to {
+    opacity:.25;
+  }
+}
+
+/* ====================================
+   SCENT / FOOD
+==================================== */
+
+.scent {
+  position:absolute;
+  z-index:12;
+
+  width:25px;
+  height:25px;
+
+  border-radius:50%;
+  transform:translate(-50%,-50%);
+  pointer-events:none;
+
+  background:
+    radial-gradient(
+      circle,
+      #fff 0 13%,
+      #ff75be 19% 40%,
+      #ffcfed 45% 50%,
+      #c8ff59 60% 75%,
+      #83c936 87%
+    );
+
+  box-shadow:
+    0 0 12px #ff75c0aa,
+    0 0 24px #c5ff5b80;
+}
+
+.scent.surging {
+  box-shadow:
+    0 0 16px #ff4ead,
+    0 0 30px #c5ff5b,
+    0 0 40px #ffb4e5;
+}
+
+.food {
+  position:absolute;
+  z-index:15;
+
+  width:25px;
+  height:25px;
+
+  border-radius:50%;
+  transform:translate(-50%,-50%);
+  pointer-events:none;
+
+  background:
+    radial-gradient(
+      circle,
+      #fff 0 12%,
+      #fffcc2 24%,
+      #fff12a 50%,
+      #ffca00 85%
+    );
+
+  box-shadow:
+    0 0 13px #ffe956,
+    0 0 28px #ffe43a,
+    0 0 45px #ffef53aa;
+
+  animation:
+    foodGlow 1s infinite alternate;
+}
+
+@keyframes foodGlow {
+  from {
+    scale:.9;
+  }
+
+  to {
+    scale:1.18;
+  }
+}
+
+.healPop {
+  position:absolute;
+  z-index:90;
+
+  transform:translate(-50%,-50%);
+
+  color:var(--hotpink);
+  font-size:20px;
+  font-weight:900;
+
+  text-shadow:
+    0 2px 0 white,
+    0 0 10px white;
+
+  pointer-events:none;
+
+  animation:
+    healFloat .75s ease-out forwards;
+}
+
+@keyframes healFloat {
+  from {
+    opacity:1;
+
+    transform:
+      translate(-50%,-50%)
+      translateY(0)
+      scale(.75);
+  }
+
+  to {
+    opacity:0;
+
+    transform:
+      translate(-50%,-50%)
+      translateY(-45px)
+      scale(1.25);
+  }
+}
+
+/* ====================================
+   LIFE BAR
+==================================== */
+
+#lifeBar {
+  position:absolute;
+  z-index:75;
+
+  top:10px;
+  left:50%;
+
+  transform:translateX(-50%);
+  width:min(350px,94vw);
+
+  padding:9px 18px 12px;
+  text-align:center;
+
+  border-radius:25px;
+  border:3px solid #ffbadd;
+
+  background:
+    linear-gradient(
+      180deg,
+      #ffffffef,
+      #fff1f9ef
+    );
+
+  box-shadow:
+    0 6px 0 #ed9cca,
+    0 12px 22px #bb7d9a22;
+
+  pointer-events:none;
+}
+
+#lifeTitle {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  gap:9px;
+  margin-bottom:7px;
+
+  color:var(--deep);
+  font-size:16px;
+  font-weight:900;
+  letter-spacing:1px;
+}
+
+.heartSymbol {
+  color:var(--hotpink);
+  font-size:23px;
+}
+
+#lifeHearts {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:12px;
+}
+
+.heart-slot {
+  position:relative;
+  display:inline-block;
+
+  width:37px;
+  height:39px;
+
+  font-family:Arial,sans-serif;
+  font-size:37px;
+  font-weight:bold;
+  line-height:39px;
+
+  flex-shrink:0;
+}
+
+.heart-base {
+  position:absolute;
+  inset:0;
+  color:#ddced9;
+}
+
+.heart-fill {
+  position:absolute;
+  left:0;
+  top:0;
+
+  height:100%;
+  overflow:hidden;
+  white-space:nowrap;
+
+  color:var(--hotpink);
+  text-shadow:0 0 7px #ffbde3;
+
+  transition:width .25s ease-out;
+}
+
+.heart-fill span {
+  display:block;
+  width:37px;
+}
+
+#lifeBar.healing {
+  animation:
+    lifeBounce .35s ease-out;
+}
+
+@keyframes lifeBounce {
+  0%,100% {
+    transform:
+      translateX(-50%)
+      scale(1);
+  }
+
+  50% {
+    transform:
+      translateX(-50%)
+      scale(1.055);
+  }
+}
+
+/* ====================================
+   HEADER
+==================================== */
+
+#hud {
+  position:absolute;
+  z-index:60;
+
+  top:5px;
+  left:12px;
+  right:14px;
+
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+
+  gap:20px;
+  pointer-events:none;
+}
+
+.headerLogo {
+  padding:0;
+  margin:0;
+}
+
+.topStats {
+  display:flex;
+  gap:10px;
+}
+
+.stat {
+  min-width:100px;
+  padding:10px 13px;
+  text-align:center;
+
+  border-radius:20px;
+  border:3px solid #d0f58d;
+
+  background:#fffff4ef;
+  box-shadow:0 5px 0 #b8e96e;
+}
+
+.stat small {
+  display:block;
+
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:2px;
+
+  color:#779954;
+}
+
+.stat strong {
+  display:block;
+
+  font-size:25px;
+  font-weight:900;
+  color:var(--deep);
+}
+
+/* ====================================
+   PANIC / EXP
+==================================== */
+
+#meterPanel {
+  position:absolute;
+  z-index:65;
+
+  left:20px;
+  bottom:18px;
+
+  width:min(440px,76vw);
+
+  display:flex;
+  flex-direction:column;
+  gap:15px;
+
+  pointer-events:none;
+}
+
+.meterCard {
+  padding:12px 17px 16px;
+
+  border-radius:25px;
+  border:3px solid #d1f695;
+
+  background:
+    linear-gradient(
+      180deg,
+      #ffffffed,
+      #fff9fdeb
+    );
+
+  box-shadow:
+    0 7px 0 #bce979,
+    0 11px 20px #64963022;
+}
+
+.meterHeader {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+
+  margin-bottom:9px;
+}
+
+.meterTitle {
+  display:flex;
+  align-items:center;
+  gap:10px;
+
+  font-size:19px;
+  font-weight:900;
+  color:var(--deep);
+}
+
+.meterIcon {
+  width:37px;
+  height:37px;
+
+  display:grid;
+  place-items:center;
+
+  border-radius:50%;
+  border:3px solid #ffbde1;
+
+  background:#fff0f9;
+  color:var(--hotpink);
+
+  font-size:21px;
+  font-weight:900;
+}
+
+.meterNumber {
+  font-size:16px;
+  font-weight:900;
+  color:#728e58;
+}
+
+.barTrack {
+  width:100%;
+  height:27px;
+
+  overflow:hidden;
+  border-radius:99px;
+  border:4px solid #e8c2e0;
+
+  background:
+    linear-gradient(
+      180deg,
+      #f5e7f3,
+      #e8d8e8
+    );
+}
+
+.barFill {
+  position:relative;
+  width:0%;
+  height:100%;
+
+  border-radius:99px;
+  transition:width .12s;
+}
+
+.barFill::after {
+  content:"";
+  position:absolute;
+
+  top:3px;
+  left:8px;
+  right:8px;
+
+  height:6px;
+  border-radius:99px;
+  background:#ffffff80;
+}
+
+#panicFill {
+  background:
+    linear-gradient(
+      90deg,
+      #b8f15c,
+      #f6ed54 45%,
+      #ff75bc
+    );
+}
+
+#expFill {
+  background:
+    linear-gradient(
+      90deg,
+      #8bcc4a,
+      #c9ff62 50%,
+      #ff89c7
+    );
+}
+
+/* ====================================
+   LEVEL BADGE
+==================================== */
+
+#levelBadge {
+  position:absolute;
+  z-index:65;
+
+  right:24px;
+  bottom:24px;
+
+  width:120px;
+  height:120px;
+
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+
+  border-radius:50%;
+  border:5px solid #ffb5de;
+
+  background:
+    radial-gradient(
+      circle at 35% 25%,
+      white,
+      #fff6fa 20%,
+      #dfffaa 90%
+    );
+
+  box-shadow:
+    0 8px 0 #e6a1c9,
+    0 15px 20px #6a9d4930;
+
+  pointer-events:none;
+}
+
+#levelBadge small {
+  font-size:14px;
+  font-weight:900;
+  letter-spacing:2px;
+
+  color:#779a4c;
+}
+
+#levelBadge strong {
+  font-size:43px;
+  line-height:1;
+  color:var(--deep);
+}
+
+/* ====================================
+   DAMAGE / CAPTURE
+==================================== */
+
+#damageFlash {
+  position:absolute;
+  inset:0;
+  z-index:45;
+
+  background:var(--pink);
+  opacity:0;
+  pointer-events:none;
+}
+
+#damageFlash.hit {
+  animation:hitFlash .4s;
+}
+
+@keyframes hitFlash {
+  35% {
+    opacity:.28;
+  }
+
+  100% {
+    opacity:0;
+  }
+}
+
+#mouthScene {
+  position:absolute;
+  inset:0;
+  z-index:80;
+
+  display:none;
+  overflow:hidden;
+  pointer-events:none;
+}
+
+#mouthScene.active {
+  display:block;
+}
+
+.mouth {
+  position:absolute;
+
+  top:-8%;
+  width:62%;
+  height:116%;
+
+  filter:
+    drop-shadow(0 0 25px #ff72bf88);
+}
+
+.mouth.left {
+  left:-65%;
+
+  animation:
+    closeLeft .95s
+    cubic-bezier(.15,.85,.2,1)
+    forwards;
+}
+
+.mouth.right {
+  right:-65%;
+
+  animation:
+    closeRight .95s
+    cubic-bezier(.15,.85,.2,1)
+    forwards;
+}
+
+.mouth svg {
+  width:100%;
+  height:100%;
+}
+
+@keyframes closeLeft {
+  0% { left:-65%; }
+  75% { left:-7%; }
+  90% { left:-12%; }
+  100% { left:-9%; }
+}
+
+@keyframes closeRight {
+  0% { right:-65%; }
+  75% { right:-7%; }
+  90% { right:-12%; }
+  100% { right:-9%; }
+}
+
+#mouthShade {
+  position:absolute;
+  inset:0;
+
+  background:#241326;
+  opacity:0;
+
+  animation:shadeIn 1.1s forwards;
+}
+
+@keyframes shadeIn {
+  70% { opacity:0; }
+  100% { opacity:.4; }
+}
+
+/* ====================================
+   START / LEVEL CLEAR OVERLAY
+==================================== */
+
+#overlay {
+  position:absolute;
+  inset:0;
+  z-index:100;
+
+  display:flex;
+  justify-content:center;
+  align-items:center;
+
+  background:
+    radial-gradient(
+      ellipse at center,
+      #fff9fbed,
+      #efffdcee
+    );
+
+  backdrop-filter:blur(12px);
+}
+
+#overlay.hidden {
+  display:none;
+}
+
+.screen {
+  position:relative;
+
+  width:min(760px,94vw);
+  max-height:94dvh;
+
+  overflow:auto;
+
+  padding:28px 30px 30px;
+  text-align:center;
+
+  border-radius:34px;
+  border:5px solid #d3f799;
+
+  background:
+    radial-gradient(
+      circle at 50% 30%,
+      #fff 0%,
+      #fff3fa 45%,
+      #edffc7 100%
+    );
+
+  box-shadow:
+    0 12px 0 #b9e97b,
+    0 30px 65px #7ca94d33;
+}
+
+.screen::before {
+  content:"";
+  position:absolute;
+
+  top:0;
+  left:0;
+  right:0;
+  height:17px;
+
+  background:
+    repeating-linear-gradient(
+      110deg,
+      var(--pink) 0 14px,
+      var(--lime) 14px 28px,
+      white 28px 33px
+    );
+}
+
+.startEyebrow {
+  margin:22px 0 12px;
+
+  font-size:12px;
+  font-weight:900;
+  letter-spacing:4px;
+
+  color:var(--green);
+}
+
+.startLogo {
+  display:flex;
+  justify-content:center;
+  margin:0 auto 13px;
+}
+
+/* ====================================
+   HAPPY GARDEN
+==================================== */
+
+.venusGarden {
+  position:relative;
+
+  width:min(620px,100%);
+  height:clamp(185px,29vh,285px);
+
+  margin:8px auto 13px;
+
+  overflow:hidden;
+
+  border-radius:24px;
+  border:2px solid #e1f8ba;
+
+  background:
+    radial-gradient(
+      ellipse at 50% 55%,
+      #fff 0%,
+      #ffeef9 42%,
+      #e8ffc9 100%
+    );
+}
+
+.venusGarden::after {
+  content:"";
+  position:absolute;
+  z-index:5;
+
+  bottom:0;
+  left:0;
+  right:0;
+
+  height:19px;
+
+  background:
+    linear-gradient(
+      180deg,
+      #dfff90,
+      #b9e96d
+    );
+
+  border-radius:50% 50% 0 0;
+}
+
+.gardenGlow {
+  position:absolute;
+
+  left:50%;
+  top:40%;
+
+  width:75%;
+  height:90%;
+
+  transform:translate(-50%,-50%);
+
+  background:
+    radial-gradient(
+      circle,
+      #ff9dd24a,
+      #d5ff7838 50%,
+      transparent 75%
+    );
+
+  filter:blur(22px);
+}
+
+.gardenPlant {
+  position:absolute;
+  display:block;
+
+  height:auto;
+  object-fit:contain;
+
+  filter:
+    drop-shadow(0 9px 10px #7ead4522);
+
+  transform-origin:center 90%;
+  pointer-events:none;
+}
+
+.plant-left {
+  z-index:2;
+
+  left:20%;
+  top:23px;
+  width:30%;
+
+  animation:
+    bounceLeft 2.2s
+    cubic-bezier(.3,.1,.3,1)
+    infinite;
+}
+
+.plant-center {
+  z-index:4;
+
+  left:50%;
+  top:0;
+  width:35%;
+
+  animation:
+    bounceCenter 2.3s
+    cubic-bezier(.3,.1,.3,1)
+    infinite;
+}
+
+.plant-right {
+  z-index:3;
+
+  left:80%;
+  top:25px;
+  width:29%;
+
+  animation:
+    bounceRight 2.5s
+    cubic-bezier(.3,.1,.3,1)
+    infinite;
+}
+
+/* 뽀잉뽀잉 모션 */
+
+@keyframes bounceLeft {
+  0%,100% {
+    transform:
+      translateX(-50%)
+      translateY(0)
+      scale(1);
+  }
+
+  15% {
+    transform:
+      translateX(-50%)
+      translateY(10px)
+      scaleX(1.13)
+      scaleY(.84);
+  }
+
+  35% {
+    transform:
+      translateX(-50%)
+      translateY(-23px)
+      scaleX(.9)
+      scaleY(1.12);
+  }
+
+  52% {
+    transform:
+      translateX(-50%)
+      translateY(2px)
+      scaleX(1.06)
+      scaleY(.94);
+  }
+
+  67% {
+    transform:
+      translateX(-50%)
+      translateY(-7px)
+      scaleX(.97)
+      scaleY(1.04);
+  }
+}
+
+@keyframes bounceCenter {
+  0%,100% {
+    transform:
+      translateX(-50%)
+      translateY(0)
+      scale(1);
+  }
+
+  18% {
+    transform:
+      translateX(-50%)
+      translateY(12px)
+      scaleX(1.15)
+      scaleY(.82);
+  }
+
+  38% {
+    transform:
+      translateX(-50%)
+      translateY(-28px)
+      scaleX(.88)
+      scaleY(1.15);
+  }
+
+  54% {
+    transform:
+      translateX(-50%)
+      translateY(3px)
+      scaleX(1.08)
+      scaleY(.93);
+  }
+
+  71% {
+    transform:
+      translateX(-50%)
+      translateY(-9px)
+      scaleX(.96)
+      scaleY(1.05);
+  }
+}
+
+@keyframes bounceRight {
+  0%,100% {
+    transform:
+      translateX(-50%)
+      translateY(0)
+      scale(1);
+  }
+
+  20% {
+    transform:
+      translateX(-50%)
+      translateY(9px)
+      scaleX(1.11)
+      scaleY(.86);
+  }
+
+  40% {
+    transform:
+      translateX(-50%)
+      translateY(-21px)
+      scaleX(.9)
+      scaleY(1.11);
+  }
+
+  58% {
+    transform:
+      translateX(-50%)
+      translateY(2px)
+      scaleX(1.06)
+      scaleY(.94);
+  }
+
+  73% {
+    transform:
+      translateX(-50%)
+      translateY(-6px)
+      scaleX(.97)
+      scaleY(1.04);
+  }
+}
+
+.gardenSparkle {
+  position:absolute;
+  z-index:6;
+
+  color:#ff79bd;
+  font-size:23px;
+
+  text-shadow:0 0 9px white;
+
+  animation:
+    sparkleMove 2s
+    ease-in-out infinite alternate;
+}
+
+.gardenSparkle.s1 {
+  left:10%;
+  top:15%;
+}
+
+.gardenSparkle.s2 {
+  right:12%;
+  top:28%;
+
+  color:#8bcc39;
+  animation-delay:-.8s;
+}
+
+.gardenSparkle.s3 {
+  left:49%;
+  top:8%;
+
+  font-size:16px;
+  animation-delay:-1.2s;
+}
+
+@keyframes sparkleMove {
+  from {
+    opacity:.3;
+    transform:scale(.8);
+  }
+
+  to {
+    opacity:1;
+    transform:scale(1.3);
+  }
+}
+
+/* ====================================
+   BUTTON / TEXT
+==================================== */
+
+.screenDescription {
+  margin:12px 0 15px;
+
+  font-size:14px;
+  line-height:1.8;
+  color:#65834e;
+}
+
+.screenDescription strong {
+  color:var(--hotpink);
+}
+
+.gameButton {
+  display:block;
+
+  min-width:245px;
+
+  margin:17px auto 20px;
+  padding:15px 30px;
+
+  border-radius:100px;
+  border:4px solid white;
+
+  background:
+    linear-gradient(
+      180deg,
+      #ff9bd5,
+      #ff5bad
+    );
+
+  color:white;
+
+  font-size:23px;
+  font-weight:900;
+  letter-spacing:2px;
+
+  box-shadow:
+    0 7px 0 #de4d9d,
+    0 14px 22px #ff86c144;
+
+  transition:
+    transform .15s,
+    box-shadow .15s;
+}
+
+.gameButton:hover {
+  transform:translateY(-2px);
+}
+
+.gameButton:active {
+  transform:translateY(4px);
+  box-shadow:0 3px 0 #de4d9d;
+}
+
+.screenFooter {
+  margin-top:22px;
+
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:2px;
+  color:#99b47b;
+}
+
+/* ====================================
+   LEVEL CLEAR
+==================================== */
+
+.clearHeading {
+  font-size:clamp(36px,7vw,65px);
+  font-weight:900;
+  font-style:italic;
+  letter-spacing:-3px;
+
+  color:var(--lime);
+
+  -webkit-text-stroke:2px var(--deep);
+
+  paint-order:stroke fill;
+
+  text-shadow:
+    5px 6px 0 var(--pink);
+}
+
+.nextLevelNumber {
+  margin:12px 0;
+
+  color:var(--hotpink);
+
+  font-size:clamp(50px,10vw,96px);
+  font-weight:900;
+  line-height:1;
+
+  animation:
+    clearPop 1s
+    ease-in-out infinite alternate;
+}
+
+@keyframes clearPop {
+  from {
+    transform:scale(.96);
+  }
+
+  to {
+    transform:scale(1.08);
+  }
+}
+
+/* ====================================
+   GAME OVER BACKGROUND
+==================================== */
+
+#overlay.gameover {
+  background:
+    radial-gradient(
+      ellipse at 50% 35%,
+      rgba(83,96,83,.90),
+      rgba(30,43,35,.97) 70%
+    );
+}
+
+/* ====================================
+   GAME OVER CARD
+
+   화면 높이에 맞춰 크기 조절
+   스크롤바 제거
+==================================== */
+
+.gameover-screen {
+  isolation:isolate;
+
+  width:min(680px,94vw);
+
+  height:min(
+    710px,
+    calc(100dvh - 24px)
+  );
+
+  max-height:calc(100dvh - 24px);
+
+  overflow:hidden;
+
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:space-between;
+
+  gap:clamp(2px,.7dvh,8px);
+
+  padding:
+    clamp(14px,2.2dvh,24px)
+    clamp(14px,3vw,26px)
+    clamp(10px,1.8dvh,22px);
+
+  border:4px solid #687363;
+
+  background:
+    radial-gradient(
+      ellipse at 50% 20%,
+      #4a584c,
+      #303c34 58%,
+      #222d28 100%
+    );
+
+  box-shadow:
+    0 11px 0 #18241d,
+    0 26px 60px #0a110eb0;
+
+  animation:
+    sadAppear .8s ease-out both;
+}
+
+.gameover-screen::before {
+  background:
+    repeating-linear-gradient(
+      110deg,
+      #586d58 0 17px,
+      #8d7180 17px 30px,
+      #343f37 30px 36px
+    );
+
+  opacity:.75;
+}
+
+.gameover-screen::after {
+  content:"";
+
+  position:absolute;
+  z-index:-1;
+  inset:0;
+
+  pointer-events:none;
+
+  background:
+    radial-gradient(
+      ellipse at 50% 48%,
+      #b2aabb14,
+      transparent 65%
+    );
+}
+
+@keyframes sadAppear {
+  from {
+    opacity:0;
+    transform:
+      translateY(18px)
+      scale(.97);
+  }
+
+  to {
+    opacity:1;
+    transform:
+      translateY(0)
+      scale(1);
+  }
+}
+
+/* ====================================
+   GAME OVER TEXT HIERARCHY
+
+   GAME OVER > VENUS FLYTRAP
+==================================== */
+
+.gameover-screen .startEyebrow {
+  flex-shrink:0;
+
+  margin:2px 0 0;
+
+  color:#c8a3b2;
+
+  font-size:11px;
+  letter-spacing:4px;
+  line-height:1.2;
+}
+
+/* GAME OVER - 가장 큰 문구 */
+
+.gameover-screen .sadHeading {
+  flex-shrink:0;
+
+  margin:0;
+
+  font-size:clamp(39px,6.5vw,69px);
+  line-height:1;
+  font-weight:900;
+  letter-spacing:-2px;
+
+  color:#d7d9c9;
+
+  text-shadow:
+    0 3px 0 #253229,
+    0 0 20px #c1c7b51e;
+}
+
+/* VENUS 로고 크기 축소 */
+
+.gameover-screen .startLogo {
+  flex-shrink:0;
+
+  margin:0;
+  padding:0;
+}
+
+/*
+  핵심 수정!
+
+  시작/성공 화면은 기존 크기,
+  게임오버 화면 로고만 작게.
+*/
+
+.gameover-screen .logo-large {
+  font-size:clamp(25px,3.6vw,43px);
+}
+
+/* 바랜 레터링 색상 */
+
+.gameover-screen .venus-logo .logo-top {
+  color:#b6bfb0;
+}
+
+.gameover-screen .venus-logo .logo-main {
+  color:#a8b69b;
+
+  -webkit-text-stroke:
+    .035em #27362b;
+
+  text-shadow:
+    .035em .035em 0 #7a8678,
+    .075em .075em 0 #877181,
+    .105em .105em 0 #5a4c5e;
+}
+
+.gameover-screen .venus-logo .logo-bottom {
+  color:#d2b5c1;
+
+  -webkit-text-stroke:
+    .055em #665365;
+
+  text-shadow:
+    .055em .055em 0 #27362b;
+}
+
+/* ====================================
+   GAME OVER GARDEN
+
+   남는 높이에 맞춰 자동 조절
+==================================== */
+
+.gameover-screen .venusGarden {
+  flex:1 1 auto;
+
+  width:min(570px,100%);
+
+  height:auto;
+  min-height:65px;
+  max-height:min(220px,26dvh);
+
+  margin:2px auto;
+  overflow:hidden;
+
+  background:
+    radial-gradient(
+      ellipse at 50% 30%,
+      #7c867c,
+      #586b5f 53%,
+      #37493f 100%
+    );
+
+  border:2px solid #82907b;
+}
+
+.gameover-screen .venusGarden::after {
+  background:
+    linear-gradient(
+      180deg,
+      #687a5d,
+      #3d533e
+    );
+}
+
+.gameover-screen .gardenGlow {
+  opacity:.32;
+
+  background:
+    radial-gradient(
+      circle,
+      #abb5b375,
+      #63766937 50%,
+      transparent 76%
+    );
+}
+
+/* 시든 파리지옥 */
+
+.gameover-screen .gardenPlant {
+  filter:
+    grayscale(.7)
+    saturate(.4)
+    brightness(.72)
+    drop-shadow(0 8px 8px #17241b55);
+}
+
+.gameover-screen .plant-left {
+  animation:
+    wiltLeft 4s
+    ease-in-out infinite alternate;
+}
+
+.gameover-screen .plant-center {
+  animation:
+    wiltCenter 4.6s
+    ease-in-out infinite alternate;
+}
+
+.gameover-screen .plant-right {
+  animation:
+    wiltRight 4.2s
+    ease-in-out infinite alternate;
+}
+
+@keyframes wiltLeft {
+  from {
+    transform:
+      translateX(-50%)
+      translateY(15px)
+      rotate(-16deg)
+      scaleX(1.08)
+      scaleY(.84);
+  }
+
+  to {
+    transform:
+      translateX(-50%)
+      translateY(20px)
+      rotate(-20deg)
+      scaleX(1.1)
+      scaleY(.8);
+  }
+}
+
+@keyframes wiltCenter {
+  from {
+    transform:
+      translateX(-50%)
+      translateY(12px)
+      rotate(-3deg)
+      scaleX(1.06)
+      scaleY(.88);
+  }
+
+  to {
+    transform:
+      translateX(-50%)
+      translateY(18px)
+      rotate(3deg)
+      scaleX(1.09)
+      scaleY(.82);
+  }
+}
+
+@keyframes wiltRight {
+  from {
+    transform:
+      translateX(-50%)
+      translateY(15px)
+      rotate(15deg)
+      scaleX(1.08)
+      scaleY(.84);
+  }
+
+  to {
+    transform:
+      translateX(-50%)
+      translateY(19px)
+      rotate(19deg)
+      scaleX(1.1)
+      scaleY(.8);
+  }
+}
+
+.gameover-screen .gardenSparkle {
+  color:#b6afbd;
+  text-shadow:none;
+  opacity:.2;
+
+  animation:
+    sadTwinkle 3s
+    ease-in-out infinite alternate;
+}
+
+@keyframes sadTwinkle {
+  from {
+    opacity:.06;
+    transform:scale(.65);
+  }
+
+  to {
+    opacity:.3;
+    transform:scale(.9);
+  }
+}
+
+/* ====================================
+   GAME OVER RAIN
+==================================== */
+
+.sadRain {
+  position:absolute;
+  z-index:7;
+  inset:0;
+
+  overflow:hidden;
+  border-radius:22px;
+
+  pointer-events:none;
+}
+
+.rainDrop {
+  position:absolute;
+
+  top:-30px;
+
+  width:1px;
+  height:24px;
+
+  background:
+    linear-gradient(
+      to bottom,
+      transparent,
+      #e0e2e38c
+    );
+
+  opacity:.55;
+
+  animation:
+    rainFall var(--rainSpeed)
+    linear infinite;
+
+  animation-delay:var(--rainDelay);
+}
+
+@keyframes rainFall {
+  from {
+    transform:translateY(-50px);
+  }
+
+  to {
+    transform:translateY(380px);
+  }
+}
+
+/* ====================================
+   GAME OVER LOWER CONTENT
+
+   여백을 줄여 스크롤 방지
+==================================== */
+
+.gameover-screen .lostHearts {
+  flex-shrink:0;
+
+  margin:0;
+
+  color:#a08c98;
+
+  font-size:clamp(19px,2.4vw,28px);
+  line-height:1;
+
+  letter-spacing:2px;
+}
+
+.gameover-screen .screenDescription {
+  flex-shrink:0;
+
+  margin:0;
+
+  color:#c9cec4;
+
+  font-size:clamp(13px,1.5vw,16px);
+  line-height:1.3;
+}
+
+.gameover-screen .sadDivider {
+  flex-shrink:0;
+
+  width:100px;
+  height:1px;
+
+  margin:1px auto;
+
+  background:#9e9f9677;
+}
+
+.gameover-screen .sadStats {
+  flex-shrink:0;
+
+  display:flex;
+  justify-content:center;
+  gap:10px;
+  flex-wrap:nowrap;
+
+  margin:0 auto;
+}
+
+.gameover-screen .sadStat {
+  min-width:98px;
+
+  padding:8px 13px;
+
+  border-radius:15px;
+  border:1px solid #778478;
+
+  background:#293830a8;
+}
+
+.gameover-screen .sadStat small {
+  display:block;
+
+  font-size:10px;
+  letter-spacing:2px;
+
+  color:#9fae9d;
+}
+
+.gameover-screen .sadStat strong {
+  display:block;
+
+  margin-top:3px;
+
+  font-size:22px;
+  line-height:1.1;
+
+  color:#e1ddda;
+}
+
+/* 게임오버 재시작 버튼 */
+
+.gameover-screen .gameButton {
+  flex-shrink:0;
+
+  min-width:210px;
+
+  margin:2px auto;
+
+  padding:
+    clamp(9px,1.4dvh,13px)
+    26px;
+
+  font-size:20px;
+
+  background:
+    linear-gradient(
+      180deg,
+      #ae899b,
+      #826c80
+    );
+
+  color:#fff8fa;
+  border-color:#c5acb9;
+
+  box-shadow:
+    0 5px 0 #544457,
+    0 10px 16px #101c1744;
+}
+
+.gameover-screen .gameButton:hover {
+  background:
+    linear-gradient(
+      180deg,
+      #c5a1b2,
+      #9a7d94
+    );
+}
+
+.gameover-screen .screenFooter {
+  flex-shrink:0;
+
+  margin:0;
+
+  color:#a5ada3;
+
+  font-size:10px;
+  line-height:1.2;
+  letter-spacing:1px;
+}
+
+/* ====================================
+   SMALLER SCREENS
+==================================== */
+
+@media(max-width:1150px) {
+
+  #lifeBar {
+    top:116px;
+  }
+
+  .logo-small {
+    font-size:clamp(54px,6.8vw,78px);
+  }
+}
+
+@media(max-width:760px) {
+
+  #lifeBar {
+    top:100px;
+    width:min(320px,96vw);
+    padding:8px 8px 10px;
+  }
+
+  #lifeHearts {
+    gap:9px;
+  }
+
+  .heart-slot {
+    width:30px;
+    height:33px;
+    font-size:30px;
+    line-height:33px;
+  }
+
+  .heart-fill span {
+    width:30px;
+  }
+
+  #hud {
+    top:5px;
+    left:8px;
+    right:8px;
+  }
+
+  .logo-small {
+    font-size:50px;
+  }
+
+  .topStats {
+    gap:5px;
+  }
+
+  .stat {
+    min-width:58px;
+    padding:6px 7px;
+    border-width:2px;
+  }
+
+  .stat small {
+    font-size:9px;
+  }
+
+  .stat strong {
+    font-size:17px;
+  }
+
+  #trap {
+    width:min(92vw,66vh);
+  }
+
+  #meterPanel {
+    left:8px;
+    bottom:8px;
+
+    width:min(330px,73vw);
+    gap:11px;
+  }
+
+  .meterCard {
+    padding:9px 11px 12px;
+  }
+
+  .meterTitle {
+    font-size:14px;
+  }
+
+  .meterIcon {
+    width:29px;
+    height:29px;
+    font-size:16px;
+  }
+
+  .barTrack {
+    height:22px;
+  }
+
+  #levelBadge {
+    right:9px;
+    bottom:12px;
+
+    width:83px;
+    height:83px;
+  }
+
+  #levelBadge strong {
+    font-size:28px;
+  }
+
+  .logo-large {
+    font-size:clamp(56px,12vw,85px);
+  }
+
+  .screen {
+    padding:25px 15px;
+  }
+
+  .venusGarden {
+    height:clamp(170px,27vh,235px);
+  }
+
+  .screenDescription {
+    font-size:12px;
+  }
+
+  .gameButton {
+    min-width:205px;
+    font-size:19px;
+  }
+
+  .leafDecor {
+    width:48px;
+    height:75px;
+  }
+
+  /* 모바일 게임오버 창 */
+
+  .gameover-screen {
+    padding:
+      clamp(12px,2dvh,20px)
+      12px
+      clamp(10px,1.5dvh,17px);
+  }
+
+  .gameover-screen .sadHeading {
+    font-size:clamp(36px,9vw,54px);
+  }
+
+  .gameover-screen .logo-large {
+    font-size:clamp(23px,5vw,32px);
+  }
+
+  .gameover-screen .venusGarden {
+    max-height:24dvh;
+    min-height:60px;
+  }
+
+  .gameover-screen .sadStat {
+    min-width:78px;
+    padding:7px 9px;
+  }
+
+  .gameover-screen .sadStat strong {
+    font-size:18px;
+  }
+
+  .gameover-screen .gameButton {
+    min-width:180px;
+    font-size:17px;
+  }
+}
+
+@media(max-width:440px) {
+
+  .logo-small {
+    font-size:40px;
+  }
+
+  #lifeBar {
+    top:92px;
+  }
+
+  .gameover-screen .startEyebrow {
+    font-size:9px;
+    letter-spacing:2px;
+  }
+
+  .gameover-screen .sadHeading {
+    font-size:36px;
+  }
+
+  .gameover-screen .logo-large {
+    font-size:23px;
+  }
+
+  .gameover-screen .sadStats {
+    gap:5px;
+  }
+
+  .gameover-screen .sadStat {
+    min-width:70px;
+    padding:6px 7px;
+  }
+
+  .gameover-screen .sadStat small {
+    font-size:9px;
+    letter-spacing:1px;
+  }
+
+  .gameover-screen .sadStat strong {
+    font-size:17px;
+  }
+
+  .gameover-screen .screenFooter {
+    font-size:8px;
+  }
+}
+
+/* 높이가 낮은 화면에서 추가 압축 */
+
+@media(max-height:650px) {
+
+  .gameover-screen {
+    gap:2px;
+    padding:10px 14px;
+  }
+
+  .gameover-screen .sadHeading {
+    font-size:clamp(30px,6dvh,43px);
+  }
+
+  .gameover-screen .logo-large {
+    font-size:clamp(20px,4dvh,29px);
+  }
+
+  .gameover-screen .venusGarden {
+    max-height:21dvh;
+    min-height:45px;
+  }
+
+  .gameover-screen .lostHearts {
+    font-size:19px;
+  }
+
+  .gameover-screen .sadStat {
+    padding:5px 9px;
+  }
+
+  .gameover-screen .gameButton {
+    margin:0 auto;
+    padding:8px 20px;
+    font-size:16px;
+  }
+}
+
+@media(max-height:450px) {
+
+  .gameover-screen {
+    gap:1px;
+    padding:7px 12px;
+  }
+
+  .gameover-screen .sadHeading {
+    font-size:27px;
+  }
+
+  .gameover-screen .logo-large {
+    font-size:18px;
+  }
+
+  .gameover-screen .venusGarden {
+    max-height:17dvh;
+    min-height:30px;
+  }
+
+  .gameover-screen .sadStat strong {
+    font-size:15px;
+  }
+
+  .gameover-screen .screenFooter {
+    font-size:8px;
+  }
+}
+
+</style>
+</head>
+
+<body>
+
+<div id="game" class="modal-open">
+
+  <!-- GAME STAGE -->
+
+  <div id="stage">
+
+    <div id="decorLayer"></div>
+
+    <div id="trapGlow"></div>
+
+    <div id="trap">
+      <img id="mainImage" alt="Venus flytrap">
+    </div>
+
+    <div id="objectLayer"></div>
+
+    <!-- PLAYER FLY -->
+
+    <div id="fly">
+
+      <div class="wing wing-left"></div>
+      <div class="wing wing-right"></div>
+
+      <div class="fly-body"></div>
+      <div class="fly-head"></div>
+
+      <div class="fly-eye a"></div>
+      <div class="fly-eye b"></div>
+
+    </div>
+
+  </div>
+
+  <div id="damageFlash"></div>
+
+  <!-- LIFE -->
+
+  <div id="lifeBar">
+
+    <div id="lifeTitle">
+
+      <span class="heartSymbol">♥</span>
+
+      <span>LIFE</span>
+
+      <span id="lifeText">5 / 5</span>
+
+    </div>
+
+    <div id="lifeHearts"></div>
+
+  </div>
+
+  <!-- GAME HEADER -->
+
+  <div id="hud">
+
+    <div class="headerLogo">
+
+      <div class="venus-logo logo-small">
+
+        <span class="logo-top">THE</span>
+
+        <span class="logo-main">VENUS</span>
+
+        <span class="logo-bottom">FLYTRAP</span>
+
+      </div>
+
+    </div>
+
+    <div class="topStats">
+
+      <div class="stat">
+
+        <small>TIME</small>
+
+        <strong id="time">30.0</strong>
+
+      </div>
+
+      <div class="stat">
+
+        <small>FOOD</small>
+
+        <strong id="score">0</strong>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- PANIC / EXP -->
+
+  <div id="meterPanel">
+
+    <div class="meterCard">
+
+      <div class="meterHeader">
+
+        <div class="meterTitle">
+          <div class="meterIcon">!</div>
+          STRUGGLE / PANIC
+        </div>
+
+        <div class="meterNumber" id="panicText">
+          0%
+        </div>
+
+      </div>
+
+      <div class="barTrack">
+        <div class="barFill" id="panicFill"></div>
+      </div>
+
+    </div>
+
+    <div class="meterCard">
+
+      <div class="meterHeader">
+
+        <div class="meterTitle">
+          <div class="meterIcon">✦</div>
+          EXP
+        </div>
+
+        <div class="meterNumber" id="expText">
+          0 / 100
+        </div>
+
+      </div>
+
+      <div class="barTrack">
+        <div class="barFill" id="expFill"></div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- LEVEL -->
+
+  <div id="levelBadge">
+
+    <small>LEVEL</small>
+
+    <strong id="levelNum">1</strong>
+
+  </div>
+
+  <!-- CAPTURE ANIMATION -->
+
+  <div id="mouthScene">
+
+    <div class="mouth left">
+
+      <svg viewBox="0 0 500 900"
+           preserveAspectRatio="none">
+
+        <defs>
+          <linearGradient
+            id="mouthL"
+            x1="0"
+            y1="0"
+            x2="1"
+            y2="0">
+
+            <stop offset="0%"
+                  stop-color="#8fd93c"/>
+
+            <stop offset="50%"
+                  stop-color="#edffb0"/>
+
+            <stop offset="100%"
+                  stop-color="#ff75bb"/>
+
+          </linearGradient>
+        </defs>
+
+        <path
+          d="M0 0 H350 L445 0 L365 85 L490 140
+             L370 205 L500 280 L370 345 L490 420
+             L370 490 L500 560 L370 630 L490 710
+             L365 780 L475 850 L365 900 H0 Z"
+          fill="url(#mouthL)"
+          stroke="#ff73bd"
+          stroke-width="8"
+        />
+
+      </svg>
+
+    </div>
+
+    <div class="mouth right">
+
+      <svg viewBox="0 0 500 900"
+           preserveAspectRatio="none">
+
+        <defs>
+          <linearGradient
+            id="mouthR"
+            x1="1"
+            y1="0"
+            x2="0"
+            y2="0">
+
+            <stop offset="0%"
+                  stop-color="#8fd93c"/>
+
+            <stop offset="50%"
+                  stop-color="#edffb0"/>
+
+            <stop offset="100%"
+                  stop-color="#ff75bb"/>
+
+          </linearGradient>
+        </defs>
+
+        <path
+          d="M500 0 H150 L55 0 L135 85 L10 140
+             L130 205 L0 280 L130 345 L10 420
+             L130 490 L0 560 L130 630 L10 710
+             L135 780 L25 850 L135 900 H500 Z"
+          fill="url(#mouthR)"
+          stroke="#ff73bd"
+          stroke-width="8"
+        />
+
+      </svg>
+
+    </div>
+
+    <div id="mouthShade"></div>
+
+  </div>
+
+  <!-- START / LEVEL CLEAR / GAME OVER -->
+
+  <div id="overlay">
+
+    <div class="screen" id="screen">
+
+      <div class="startEyebrow">
+        A SWEET LITTLE SURVIVAL GAME
+      </div>
+
+      <div class="startLogo">
+
+        <div class="venus-logo logo-large">
+
+          <span class="logo-top">THE</span>
+
+          <span class="logo-main">VENUS</span>
+
+          <span class="logo-bottom">FLYTRAP</span>
+
+        </div>
+
+      </div>
+
+      <div class="venusGarden">
+
+        <div class="gardenGlow"></div>
+
+        <img
+          id="garden2"
+          class="gardenPlant plant-left"
+          alt="왼쪽 파리지옥"
+        >
+
+        <img
+          id="gardenMain"
+          class="gardenPlant plant-center"
+          alt="중앙 파리지옥"
+        >
+
+        <img
+          id="garden3"
+          class="gardenPlant plant-right"
+          alt="오른쪽 파리지옥"
+        >
+
+        <div class="gardenSparkle s1">✦</div>
+        <div class="gardenSparkle s2">✦</div>
+        <div class="gardenSparkle s3">✧</div>
+
+      </div>
+
+      <div class="screenDescription">
+
+        파리지옥의 냄새입자를 조심하세요.<br>
+
+        먹이 4개를 먹으면
+        목숨 1개가 회복됩니다.<br>
+
+        30초를 버티면
+        다음 레벨로 진입합니다.<br>
+
+        <strong>피하려 할 수록 죽습니다.</strong>
+
+      </div>
+
+      <button class="gameButton" id="startButton">
+
+        START GAME
+
+      </button>
+
+      <div class="screenFooter">
+        MOVE SLOWLY · STAY ALIVE
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  /* ====================================
+     UTILITIES
+  ==================================== */
+
+  const $ = id =>
+    document.getElementById(id);
+
+  const clamp = (v,a,b) =>
+    Math.max(a,Math.min(b,v));
+
+  const distance = (a,b) =>
+    Math.hypot(a.x-b.x,a.y-b.y);
+
+  const game = $("game");
+  const trap = $("trap");
+  const mainImage = $("mainImage");
+  const flyEl = $("fly");
+  const objects = $("objectLayer");
+  const decor = $("decorLayer");
+  const overlay = $("overlay");
+  const screen = $("screen");
+  const mouthScene = $("mouthScene");
+
+  /* ====================================
+     GAME CONFIG
+  ==================================== */
+
+  const CFG = {
+
+    duration:30,
+
+    maxLives:5,
+
+    // 먹이 4개당 하트 1개 회복
+    healPerFood:.25,
+
+    invincibleTime:1.3,
+
+    foodCount:11,
+    expPerFood:20,
+    scentCount:28,
+
+    // 레벨 1 기준 속도
+    scentIdleSpeed:126,
+    scentSurgeSpeed:300,
+    scentScatterSpeed:190,
+
+    // 레벨마다 1.5배
+    levelSpeedMultiplier:1.5,
+
+    scentSeparationRadius:95,
+
+    surgeThreshold:620,
+    surgeDuration:.85,
+
+    calmThreshold:150,
+    calmReleaseTime:.22,
+
+    surgeCooldown:1.0,
+    scatterDuration:2.5,
+
+    levelTransitionDelay:8000
+  };
+
+  /* ====================================
+     STATE
+  ==================================== */
+
+  let W = innerWidth;
+  let H = innerHeight;
+
+  let state = "INTRO";
+
+  let elapsed = 0;
+  let lastFrame = 0;
+  let raf = 0;
+
+  let lives = CFG.maxLives;
+  let score = 0;
+  let exp = 0;
+  let level = 1;
+
+  let panic = 0;
+  let invincible = 0;
+
+  let surgeTimer = 0;
+  let surgeCooldown = 0;
+  let calmTimer = 0;
+  let motionSpeed = 0;
+
+  let previousPointer = null;
+
+  let fly = {
+    x:W*.5,
+    y:H*.82
+  };
+
+  let target = {...fly};
+
+  let foods = [];
+  let scents = [];
+
+  const imageCache = {};
+
+  let nextLevelTimeout = null;
+
+  /* ====================================
+     LEVEL SPEED
+  ==================================== */
+
+  function getLevelMultiplier() {
+
+    return Math.pow(
+      CFG.levelSpeedMultiplier,
+      level-1
+    );
+  }
+
+  function getIdleSpeed() {
+
+    return CFG.scentIdleSpeed*
+      getLevelMultiplier();
+  }
+
+  function getSurgeSpeed() {
+
+    return CFG.scentSurgeSpeed*
+      getLevelMultiplier();
+  }
+
+  function getScatterSpeed() {
+
+    return CFG.scentScatterSpeed*
+      getLevelMultiplier();
+  }
+
+  /* ====================================
+     IMAGE TRANSPARENCY
+  ==================================== */
+
+  async function makeTransparent(name) {
+
+    if(imageCache[name]) {
+      return imageCache[name];
+    }
+
+    const img = new Image();
+
+    img.src = name;
+
+    await img.decode();
+
+    const canvas =
+      document.createElement("canvas");
+
+    canvas.width = img.naturalWidth;
+    canvas.height = img.naturalHeight;
+
+    const ctx = canvas.getContext(
+      "2d",
+      {willReadFrequently:true}
+    );
+
+    ctx.drawImage(img,0,0);
+
+    const imageData = ctx.getImageData(
+      0,
+      0,
+      canvas.width,
+      canvas.height
+    );
+
+    const d = imageData.data;
+
+    for(let i=0;i<d.length;i+=4) {
+
+      const m = Math.max(
+        d[i],
+        d[i+1],
+        d[i+2]
+      );
+
+      if(m<=12) {
+        d[i+3] = 0;
+      }
+
+      else if(m<45) {
+        d[i+3] =
+          Math.round(d[i+3]*(m-12)/33);
+      }
+    }
+
+    ctx.putImageData(imageData,0,0);
+
+    imageCache[name] =
+      canvas.toDataURL("image/png");
+
+    return imageCache[name];
+  }
+
+  /* ====================================
+     IMAGE LOADING
+  ==================================== */
+
+  async function loadImages() {
+
+    for(const name of [
+      "main.png",
+      "2.png",
+      "3.png"
+    ]) {
+
+      try {
+        await makeTransparent(name);
+      }
+
+      catch(e) {
+        console.warn(
+          "이미지 로딩 오류:",
+          name,
+          e
+        );
+      }
+
+    }
+
+    mainImage.src =
+      imageCache["main.png"]||"main.png";
+
+    $("gardenMain").src =
+      imageCache["main.png"]||"main.png";
+
+    $("garden2").src =
+      imageCache["2.png"]||"2.png";
+
+    $("garden3").src =
+      imageCache["3.png"]||"3.png";
+
+    createDecorations();
+  }
+
+  /* ====================================
+     BACKGROUND DECORATIONS
+  ==================================== */
+
+  function createDecorations() {
+
+    const items = [
+      ["2.png",7,26,250,-20],
+      ["3.png",93,19,245,22],
+      ["2.png",12,81,215,32],
+      ["3.png",89,83,260,-20],
+      ["2.png",31,5,145,12],
+      ["3.png",70,94,170,-16],
+      ["2.png",3,56,160,-35],
+      ["3.png",97,52,160,28]
+    ];
+
+    for(const [name,x,y,size,rot] of items) {
+
+      const img =
+        document.createElement("img");
+
+      img.className = "decor";
+
+      img.src =
+        imageCache[name]||name;
+
+      img.style.left = x+"%";
+      img.style.top = y+"%";
+      img.style.width = size+"px";
+
+      img.style.setProperty(
+        "--rotation",
+        rot+"deg"
+      );
+
+      decor.appendChild(img);
+    }
+
+    // 도트
+
+    for(let i=0;i<24;i++) {
+
+      const dot =
+        document.createElement("div");
+
+      dot.className = "bgDot";
+
+      const size = 10+Math.random()*30;
+
+      dot.style.width = size+"px";
+      dot.style.height = size+"px";
+
+      dot.style.left =
+        Math.random()*100+"%";
+
+      dot.style.top =
+        Math.random()*100+"%";
+
+      decor.appendChild(dot);
+    }
+
+    // 꽃가루
+
+    for(let i=0;i<32;i++) {
+
+      const p =
+        document.createElement("div");
+
+      p.className = "pollen";
+
+      const size = 2+Math.random()*5;
+
+      p.style.width = size+"px";
+      p.style.height = size+"px";
+
+      p.style.left =
+        Math.random()*100+"%";
+
+      p.style.top =
+        Math.random()*100+"%";
+
+      p.style.setProperty(
+        "--duration",
+        (2.5+Math.random()*3)+"s"
+      );
+
+      p.style.animationDelay =
+        (-Math.random()*5)+"s";
+
+      decor.appendChild(p);
+    }
+
+    // 링
+
+    const rings = [
+      [10,35,210,false],
+      [88,67,270,true],
+      [75,12,140,false],
+      [19,88,180,true]
+    ];
+
+    for(const [x,y,size,pink] of rings) {
+
+      const ring =
+        document.createElement("div");
+
+      ring.className =
+        "backgroundRing"+
+        (pink?" pink":"");
+
+      ring.style.width = size+"px";
+      ring.style.height = size+"px";
+
+      ring.style.left =
+        `calc(${x}% - ${size/2}px)`;
+
+      ring.style.top =
+        `calc(${y}% - ${size/2}px)`;
+
+      decor.appendChild(ring);
+    }
+
+    // 잎
+
+    const leaves = [
+      [5,12,-35],
+      [92,34,35],
+      [18,67,-70],
+      [79,80,45],
+      [52,6,30],
+      [60,89,-20]
+    ];
+
+    for(const [x,y,r] of leaves) {
+
+      const leaf =
+        document.createElement("div");
+
+      leaf.className = "leafDecor";
+
+      leaf.style.left = x+"%";
+      leaf.style.top = y+"%";
+
+      leaf.style.setProperty(
+        "--leafRotation",
+        r+"deg"
+      );
+
+      decor.appendChild(leaf);
+    }
+
+  }
+
+  /* ====================================
+     TRAP GEOMETRY
+  ==================================== */
+
+  function positionTrap() {
+
+    const width =
+      trap.getBoundingClientRect().width;
+
+    const ratio =
+      mainImage.naturalWidth
+      ? mainImage.naturalHeight/
+        mainImage.naturalWidth
+      : 1.8;
+
+    const height = width*ratio;
+
+    trap.style.top =
+      (H*.51-height*.245)+"px";
+  }
+
+  function getTrapHead() {
+
+    const r =
+      trap.getBoundingClientRect();
+
+    return {
+      x:r.left+r.width*.5,
+      y:r.top+r.height*.245,
+      rx:r.width*.42,
+      ry:r.height*.22
+    };
+  }
+
+  function hitsTrap(x,y) {
+
+    const h = getTrapHead();
+
+    const dx = (x-h.x)/h.rx;
+    const dy = (y-h.y)/h.ry;
+
+    return dx*dx+dy*dy<1;
+  }
+
+  /* ====================================
+     LIFE / HEALING
+  ==================================== */
+
+  function formatLives() {
+
+    return Number(
+      lives.toFixed(2)
+    ).toString();
+  }
+
+  function renderLife() {
+
+    $("lifeText").textContent =
+      `${formatLives()} / ${CFG.maxLives}`;
+
+    const box = $("lifeHearts");
+
+    box.innerHTML = "";
+
+    for(let i=0;i<CFG.maxLives;i++) {
+
+      const fillFraction =
+        clamp(lives-i,0,1);
+
+      const slot =
+        document.createElement("div");
+
+      slot.className = "heart-slot";
+
+      const base =
+        document.createElement("span");
+
+      base.className = "heart-base";
+      base.textContent = "♥";
+
+      const fill =
+        document.createElement("div");
+
+      fill.className = "heart-fill";
+
+      fill.style.width =
+        (fillFraction*100)+"%";
+
+      const fillHeart =
+        document.createElement("span");
+
+      fillHeart.textContent = "♥";
+
+      fill.appendChild(fillHeart);
+
+      slot.appendChild(base);
+      slot.appendChild(fill);
+
+      box.appendChild(slot);
+    }
+  }
+
+  function healLife(amount) {
+
+    if(lives>=CFG.maxLives) {
+      return false;
+    }
+
+    const oldLives = lives;
+
+    lives = clamp(
+      Math.round((lives+amount)*100)/100,
+      0,
+      CFG.maxLives
+    );
+
+    renderLife();
+
+    if(lives>oldLives) {
+
+      const lifeBar = $("lifeBar");
+
+      lifeBar.classList.remove(
+        "healing"
+      );
+
+      void lifeBar.offsetWidth;
+
+      lifeBar.classList.add(
+        "healing"
+      );
+
+      return true;
+    }
+
+    return false;
+  }
+
+  function showHealPopup(x,y,message) {
+
+    const pop =
+      document.createElement("div");
+
+    pop.className = "healPop";
+
+    pop.textContent = message;
+
+    pop.style.left = x+"px";
+    pop.style.top = y+"px";
+
+    objects.appendChild(pop);
+
+    pop.addEventListener(
+      "animationend",
+      ()=>pop.remove(),
+      {once:true}
+    );
+  }
+
+  /* ====================================
+     EXP / PANIC
+  ==================================== */
+
+  function renderExp() {
+
+    $("expText").textContent =
+      `${exp} / 100`;
+
+    $("expFill").style.width =
+      exp+"%";
+
+    $("levelNum").textContent =
+      level;
+  }
+
+  function addExp(amount) {
+
+    exp += amount;
+
+    while(exp>=100) {
+      exp -= 100;
+    }
+
+    renderExp();
+  }
+
+  function renderPanic() {
+
+    const value = Math.round(panic);
+
+    $("panicFill").style.width =
+      value+"%";
+
+    $("panicText").textContent =
+      value+"%";
+  }
+
+  /* ====================================
+     RANDOM POSITIONS
+  ==================================== */
+
+  function safePosition(minDistance=130) {
+
+    for(let i=0;i<150;i++) {
+
+      const p = {
+        x:35+Math.random()*
+          Math.max(1,W-70),
+
+        y:145+Math.random()*
+          Math.max(1,H-175)
+      };
+
+      if(
+        !hitsTrap(p.x,p.y) &&
+        distance(p,fly)>minDistance
+      ) {
+        return p;
+      }
+    }
+
+    return {
+      x:Math.max(30,W*.15),
+      y:H*.75
+    };
+  }
+
+  function randomRoamGoal(from) {
+
+    for(let i=0;i<30;i++) {
+
+      const p = {
+        x:25+Math.random()*
+          Math.max(1,W-50),
+
+        y:130+Math.random()*
+          Math.max(1,H-160)
+      };
+
+      if(
+        distance(p,from)>
+          Math.min(W,H)*.28 &&
+        distance(p,fly)>105
+      ) {
+        return p;
+      }
+    }
+
+    return safePosition(105);
+  }
+
+  /* ====================================
+     FOOD
+  ==================================== */
+
+  function spawnFood() {
+
+    const el =
+      document.createElement("div");
+
+    el.className = "food";
+
+    objects.appendChild(el);
+
+    const p = safePosition(100);
+
+    foods.push({
+      ...p,
+
+      vx:(Math.random()-.5)*45,
+      vy:(Math.random()-.5)*45,
+
+      el
+    });
+  }
+
+  function updateFoods(dt) {
+
+    for(const food of foods) {
+
+      food.x += food.vx*dt;
+      food.y += food.vy*dt;
+
+      if(food.x<20 || food.x>W-20) {
+        food.vx *= -1;
+      }
+
+      if(food.y<120 || food.y>H-20) {
+        food.vy *= -1;
+      }
+
+      food.el.style.left =
+        food.x+"px";
+
+      food.el.style.top =
+        food.y+"px";
+
+      if(distance(food,fly)<25) {
+
+        score++;
+
+        $("score").textContent =
+          score;
+
+        addExp(CFG.expPerFood);
+
+        const healed =
+          healLife(CFG.healPerFood);
+
+        showHealPopup(
+          fly.x,
+          fly.y-23,
+          healed ? "+¼ ♥" : "+ EXP"
+        );
+
+        const p = safePosition(100);
+
+        food.x = p.x;
+        food.y = p.y;
+      }
+    }
+  }
+
+  /* ====================================
+     SCENT CREATION
+  ==================================== */
+
+  function spawnScent() {
+
+    const el =
+      document.createElement("div");
+
+    el.className = "scent";
+
+    objects.appendChild(el);
+
+    const p = safePosition(145);
+
+    const s = {
+      x:p.x,
+      y:p.y,
+
+      angle:Math.random()*Math.PI*2,
+
+      mode:"wander",
+      modeTime:0,
+
+      goal:null,
+      scatterGoal:null,
+
+      phase:Math.random()*Math.PI*2,
+
+      el
+    };
+
+    s.goal = randomRoamGoal(s);
+
+    scents.push(s);
+  }
+
+  /* ====================================
+     PARTICLE SEPARATION
+  ==================================== */
+
+  function separationForce(s) {
+
+    let fx = 0;
+    let fy = 0;
+
+    for(const other of scents) {
+
+      if(other===s) {
+        continue;
+      }
+
+      const dx = s.x-other.x;
+      const dy = s.y-other.y;
+
+      const d = Math.hypot(dx,dy);
+
+      if(
+        d>.001 &&
+        d<CFG.scentSeparationRadius
+      ) {
+
+        const weight = Math.pow(
+          (
+            CFG.scentSeparationRadius-d
+          )/
+          CFG.scentSeparationRadius,
+          2
+        );
+
+        fx += (dx/d)*weight;
+        fy += (dy/d)*weight;
+      }
+    }
+
+    return {x:fx,y:fy};
+  }
+
+  function angleDifference(from,to) {
+
+    return Math.atan2(
+      Math.sin(to-from),
+      Math.cos(to-from)
+    );
+  }
+
+  /* ====================================
+     SURGE
+  ==================================== */
+
+  function triggerSurge() {
+
+    if(
+      surgeCooldown>0 ||
+      surgeTimer>0
+    ) {
+      return;
+    }
+
+    surgeTimer = CFG.surgeDuration;
+
+    surgeCooldown =
+      CFG.surgeCooldown;
+
+    calmTimer = 0;
+
+    for(const s of scents) {
+
+      s.mode = "surge";
+      s.modeTime = 0;
+
+      s.el.classList.add(
+        "surging"
+      );
+    }
+  }
+
+  /* ====================================
+     SCATTER AFTER SURGE
+  ==================================== */
+
+  function endSurge() {
+
+    if(
+      surgeTimer<=0 &&
+      !scents.some(
+        s=>s.mode==="surge"
+      )
+    ) {
+      return;
+    }
+
+    surgeTimer = 0;
+    calmTimer = 0;
+
+    const count = scents.length;
+
+    const columns = Math.ceil(
+      Math.sqrt(
+        count*W/Math.max(H,1)
+      )
+    );
+
+    const rows = Math.ceil(
+      count/columns
+    );
+
+    const targets = [];
+
+    const top = clamp(
+      H*.19,
+      115,
+      Math.max(115,H-55)
+    );
+
+    const bottom =
+      Math.max(top+1,H-28);
+
+    for(let row=0;row<rows;row++) {
+
+      for(let col=0;col<columns;col++) {
+
+        targets.push({
+          x:W*(col+.5)/columns,
+
+          y:top+
+            (bottom-top)*
+            (row+.5)/rows
+        });
+      }
+    }
+
+    for(let i=targets.length-1;i>0;i--) {
+
+      const j = Math.floor(
+        Math.random()*(i+1)
+      );
+
+      [targets[i],targets[j]] =
+        [targets[j],targets[i]];
+    }
+
+    scents.forEach((s,i)=>{
+
+      const p =
+        targets[i%targets.length];
+
+      let goal = {...p};
+
+      if(distance(goal,fly)<115) {
+
+        goal = {
+          x:clamp(
+            W-goal.x,
+            20,
+            W-20
+          ),
+
+          y:clamp(
+            H-goal.y+top*.5,
+            top,
+            bottom
+          )
+        };
+      }
+
+      s.mode = "scatter";
+
+      s.modeTime =
+        CFG.scatterDuration;
+
+      s.scatterGoal = goal;
+
+      s.el.classList.remove(
+        "surging"
+      );
+    });
+  }
+
+  /* ====================================
+     SCENT MOVEMENT
+  ==================================== */
+
+  function updateScents(dt) {
+
+    const idleSpeed = getIdleSpeed();
+    const surgeSpeed = getSurgeSpeed();
+    const scatterSpeed = getScatterSpeed();
+
+    for(const s of scents) {
+
+      s.phase += dt;
+
+      let desiredAngle = s.angle;
+      let speed = idleSpeed;
+
+      const previousX = s.x;
+      const previousY = s.y;
+
+      /* 급습 */
+
+      if(s.mode==="surge") {
+
+        desiredAngle = Math.atan2(
+          fly.y-s.y,
+          fly.x-s.x
+        );
+
+        speed = surgeSpeed;
+
+        s.angle += angleDifference(
+          s.angle,
+          desiredAngle
+        )*Math.min(1,dt*8);
+      }
+
+      /* 급습 후 분산 */
+
+      else if(s.mode==="scatter") {
+
+        s.modeTime -= dt;
+
+        const goal = s.scatterGoal;
+
+        const dx = goal.x-s.x;
+        const dy = goal.y-s.y;
+
+        const separation =
+          separationForce(s);
+
+        desiredAngle = Math.atan2(
+          dy+separation.y*220,
+          dx+separation.x*220
+        );
+
+        s.angle += angleDifference(
+          s.angle,
+          desiredAngle
+        )*Math.min(1,dt*8);
+
+        speed = scatterSpeed;
+
+        if(
+          distance(s,goal)<35 ||
+          s.modeTime<=0
+        ) {
+
+          s.mode = "wander";
+
+          s.goal =
+            randomRoamGoal(s);
+        }
+      }
+
+      /* 자유 이동 */
+
+      else {
+
+        if(
+          !s.goal ||
+          distance(s,s.goal)<40
+        ) {
+
+          s.goal =
+            randomRoamGoal(s);
+        }
+
+        const dx = s.goal.x-s.x;
+        const dy = s.goal.y-s.y;
+
+        const separation =
+          separationForce(s);
+
+        desiredAngle = Math.atan2(
+          dy+separation.y*250,
+          dx+separation.x*250
+        );
+
+        s.angle += angleDifference(
+          s.angle,
+          desiredAngle
+        )*Math.min(1,dt*3.5);
+
+        speed = idleSpeed;
+      }
+
+      /* 실제 이동 */
+
+      s.x +=
+        Math.cos(s.angle)*speed*dt;
+
+      s.y +=
+        Math.sin(s.angle)*speed*dt;
+
+      /* 경계 */
+
+      if(s.x<16) {
+
+        s.x = 16;
+        s.angle = Math.PI-s.angle;
+
+        s.goal =
+          randomRoamGoal(s);
+      }
+
+      if(s.x>W-16) {
+
+        s.x = W-16;
+        s.angle = Math.PI-s.angle;
+
+        s.goal =
+          randomRoamGoal(s);
+      }
+
+      if(s.y<108) {
+
+        s.y = 108;
+        s.angle = -s.angle;
+
+        s.goal =
+          randomRoamGoal(s);
+      }
+
+      if(s.y>H-16) {
+
+        s.y = H-16;
+        s.angle = -s.angle;
+
+        s.goal =
+          randomRoamGoal(s);
+      }
+
+      s.el.style.left =
+        s.x+"px";
+
+      s.el.style.top =
+        s.y+"px";
+
+      const scale =
+        1+Math.sin(s.phase*2)*.07;
+
+      s.el.style.transform =
+        `translate(-50%,-50%) scale(${scale})`;
+
+      /* 빠른 입자 경로 충돌 판정 */
+
+      const segX = s.x-previousX;
+      const segY = s.y-previousY;
+
+      const segmentLengthSq =
+        segX*segX+segY*segY;
+
+      let t = 0;
+
+      if(segmentLengthSq>0) {
+
+        t = clamp(
+          (
+            (fly.x-previousX)*segX+
+            (fly.y-previousY)*segY
+          )/segmentLengthSq,
+          0,
+          1
+        );
+      }
+
+      const closestX =
+        previousX+segX*t;
+
+      const closestY =
+        previousY+segY*t;
+
+      if(
+        Math.hypot(
+          fly.x-closestX,
+          fly.y-closestY
+        )<22
+      ) {
+
+        takeDamage();
+
+        if(state!=="PLAYING") {
+          return;
+        }
+      }
+    }
+  }
+
+  /* ====================================
+     FLY MOVEMENT
+  ==================================== */
+
+  function updateFly(dt) {
+
+    const follow =
+      1-Math.exp(-12*dt);
+
+    fly.x +=
+      (target.x-fly.x)*follow;
+
+    fly.y +=
+      (target.y-fly.y)*follow;
+
+    flyEl.style.left =
+      fly.x+"px";
+
+    flyEl.style.top =
+      fly.y+"px";
+  }
+
+  /* ====================================
+     POINTER
+  ==================================== */
+
+  document.addEventListener(
+    "pointermove",
+    e=>{
+
+      if(state!=="PLAYING") {
+        return;
+      }
+
+      const x =
+        clamp(e.clientX,15,W-15);
+
+      const y =
+        clamp(e.clientY,15,H-15);
+
+      const now = performance.now();
+
+      if(previousPointer) {
+
+        const dx =
+          x-previousPointer.x;
+
+        const dy =
+          y-previousPointer.y;
+
+        const d = Math.hypot(dx,dy);
+
+        const dt = Math.max(
+          .008,
+          (now-previousPointer.time)/1000
+        );
+
+        const velocity = d/dt;
+
+        motionSpeed = velocity;
+
+        if(
+          velocity>CFG.surgeThreshold &&
+          d>18
+        ) {
+
+          panic = Math.min(
+            100,
+            panic+18
+          );
+
+          triggerSurge();
+        }
+      }
+
+      previousPointer = {
+        x,
+        y,
+        time:now
+      };
+
+      target.x = x;
+      target.y = y;
+    }
+  );
+
+  /* ====================================
+     SURGE → CALM → SCATTER
+  ==================================== */
+
+  function updateMovementState(dt) {
+
+    surgeCooldown = Math.max(
+      0,
+      surgeCooldown-dt
+    );
+
+    motionSpeed *=
+      Math.exp(-dt*12);
+
+    panic = Math.max(
+      0,
+      panic-dt*16
+    );
+
+    if(surgeTimer>0) {
+
+      surgeTimer -= dt;
+
+      if(
+        motionSpeed<
+          CFG.calmThreshold
+      ) {
+
+        calmTimer += dt;
+      }
+
+      else {
+        calmTimer = 0;
+      }
+
+      if(
+        surgeTimer<=0 ||
+        calmTimer>=CFG.calmReleaseTime
+      ) {
+
+        endSurge();
+      }
+    }
+
+    renderPanic();
+  }
+
+  /* ====================================
+     DAMAGE
+  ==================================== */
+
+  function takeDamage() {
+
+    if(
+      state!=="PLAYING" ||
+      invincible>0
+    ) {
+      return;
+    }
+
+    lives = Math.max(
+      0,
+      Math.round((lives-1)*100)/100
+    );
+
+    renderLife();
+
+    invincible =
+      CFG.invincibleTime;
+
+    flyEl.classList.add(
+      "invincible"
+    );
+
+    const flash = $("damageFlash");
+
+    flash.classList.remove("hit");
+
+    void flash.offsetWidth;
+
+    flash.classList.add("hit");
+
+    if(lives<=0) {
+
+      captureGameOver();
+
+      return;
+    }
+
+    fly = {
+      x:W*.5,
+      y:H*.82
+    };
+
+    target = {...fly};
+
+    previousPointer = null;
+    motionSpeed = 0;
+  }
+
+  /* ====================================
+     GAME OVER CAPTURE
+  ==================================== */
+
+  function captureGameOver() {
+
+    if(state!=="PLAYING") {
+      return;
+    }
+
+    state = "CAPTURE";
+
+    cancelAnimationFrame(raf);
+
+    game.classList.remove(
+      "playing"
+    );
+
+    mouthScene.classList.remove(
+      "active"
+    );
+
+    void mouthScene.offsetWidth;
+
+    mouthScene.classList.add(
+      "active"
+    );
+
+    setTimeout(()=>{
+
+      if(state==="CAPTURE") {
+        showGameOver();
+      }
+
+    },1200);
+  }
+
+  /* ====================================
+     REUSABLE LOGO
+  ==================================== */
+
+  function logoHTML() {
+
+    return `
+      <div class="startLogo">
+
+        <div class="venus-logo logo-large">
+
+          <span class="logo-top">THE</span>
+
+          <span class="logo-main">VENUS</span>
+
+          <span class="logo-bottom">FLYTRAP</span>
+
+        </div>
+
+      </div>
+    `;
+  }
+
+  /* ====================================
+     REUSABLE GARDEN
+  ==================================== */
+
+  function gardenHTML(sad=false) {
+
+    return `
+      <div class="venusGarden">
+
+        <div class="gardenGlow"></div>
+
+        <img
+          class="gardenPlant plant-left"
+          src="${imageCache["2.png"]||"2.png"}"
+          alt="파리지옥"
+        >
+
+        <img
+          class="gardenPlant plant-center"
+          src="${mainImage.src||"main.png"}"
+          alt="파리지옥"
+        >
+
+        <img
+          class="gardenPlant plant-right"
+          src="${imageCache["3.png"]||"3.png"}"
+          alt="파리지옥"
+        >
+
+        <div class="gardenSparkle s1">✦</div>
+        <div class="gardenSparkle s2">✦</div>
+        <div class="gardenSparkle s3">✧</div>
+
+        ${
+          sad
+          ? '<div class="sadRain" id="sadRain"></div>'
+          : ''
+        }
+
+      </div>
+    `;
+  }
+
+  /* ====================================
+     GAME OVER RAIN
+  ==================================== */
+
+  function createSadRain() {
+
+    const rain = $("sadRain");
+
+    if(!rain) {
+      return;
+    }
+
+    rain.innerHTML = "";
+
+    for(let i=0;i<32;i++) {
+
+      const drop =
+        document.createElement("span");
+
+      drop.className = "rainDrop";
+
+      drop.style.left =
+        Math.random()*100+"%";
+
+      drop.style.height =
+        (12+Math.random()*24)+"px";
+
+      drop.style.opacity =
+        .2+Math.random()*.45;
+
+      drop.style.setProperty(
+        "--rainSpeed",
+        (1.1+Math.random()*1.3)+"s"
+      );
+
+      drop.style.setProperty(
+        "--rainDelay",
+        (-Math.random()*3)+"s"
+      );
+
+      rain.appendChild(drop);
+    }
+  }
+
+  /* ====================================
+     GAME OVER SCREEN
+
+     사용자 수정 문구 적용
+
+     GAME OVER가 가장 크게
+     VENUS 로고는 더 작게
+
+     스크롤 없는 레이아웃
+  ==================================== */
+
+  function showGameOver() {
+
+    state = "GAMEOVER";
+
+    game.classList.remove(
+      "playing"
+    );
+
+    game.classList.add(
+      "modal-open"
+    );
+
+    overlay.classList.remove(
+      "hidden"
+    );
+
+    overlay.classList.add(
+      "gameover"
+    );
+
+    screen.className =
+      "screen gameover-screen";
+
+    mouthScene.classList.remove(
+      "active"
+    );
+
+    screen.innerHTML = `
+
+      <div class="startEyebrow">
+        NO MORE WINGS TO FLY
+      </div>
+
+      <div class="sadHeading">
+        GAME OVER
+      </div>
+
+      ${logoHTML()}
+
+      ${gardenHTML(true)}
+
+      <div class="lostHearts">
+        ♡ ♡ ♡ ♡ ♡
+      </div>
+
+      <div class="screenDescription">
+        You died.
+      </div>
+
+      <div class="sadDivider"></div>
+
+      <div class="sadStats">
+
+        <div class="sadStat">
+
+          <small>LEVEL</small>
+
+          <strong>${level}</strong>
+
+        </div>
+
+        <div class="sadStat">
+
+          <small>FOOD</small>
+
+          <strong>${score}</strong>
+
+        </div>
+
+        <div class="sadStat">
+
+          <small>SURVIVED</small>
+
+          <strong>
+            ${Math.min(30,elapsed).toFixed(1)}s
+          </strong>
+
+        </div>
+
+      </div>
+
+      <button
+        class="gameButton"
+        id="restartButton"
+      >
+        TRY AGAIN
+      </button>
+
+      
+    `;
+
+    createSadRain();
+
+    $("restartButton").onclick =
+      startNewGame;
+  }
+
+  /* ====================================
+     LEVEL CLEAR
+  ==================================== */
+
+  function clearLevel() {
+
+    if(state!=="PLAYING") {
+      return;
+    }
+
+    state = "LEVEL_CLEAR";
+
+    cancelAnimationFrame(raf);
+
+    game.classList.remove(
+      "playing"
+    );
+
+    game.classList.add(
+      "modal-open"
+    );
+
+    overlay.classList.remove(
+      "gameover"
+    );
+
+    screen.className = "screen";
+
+    const clearedLevel = level;
+
+    level++;
+
+    renderExp();
+
+    const multiplier =
+      getLevelMultiplier();
+
+    overlay.classList.remove(
+      "hidden"
+    );
+
+    screen.innerHTML = `
+
+      <div class="startEyebrow">
+        SURVIVAL COMPLETE
+      </div>
+
+      <div class="clearHeading">
+        LEVEL CLEAR!
+      </div>
+
+      ${gardenHTML(false)}
+
+      <div class="screenDescription">
+
+        LEVEL ${clearedLevel} 생존 성공!
+
+        <br>
+
+        다음 레벨로 진입!
+
+      </div>
+
+      <div class="nextLevelNumber">
+        LEVEL ${level}
+      </div>
+
+      <div class="screenDescription">
+
+        냄새 입자 속도
+
+        <strong>
+          ×${multiplier.toFixed(2)}
+        </strong>
+
+        <br>
+
+        평상시
+        ${Math.round(getIdleSpeed())}px/s
+
+        · 급습
+        ${Math.round(getSurgeSpeed())}px/s
+
+        <br>
+
+        현재 목숨
+        ${formatLives()} / ${CFG.maxLives}
+
+      </div>
+
+      <button
+        class="gameButton"
+        id="nextLevelButton"
+      >
+        NEXT LEVEL
+      </button>
+
+      <div class="screenFooter">
+        CLICK TO CONTINUE!
+      </div>
+
+    `;
+
+    $("nextLevelButton").onclick = ()=>{
+
+      clearTimeout(
+        nextLevelTimeout
+      );
+
+      nextLevelTimeout = null;
+
+      startRound(false);
+    };
+
+    
+  }
+
+  /* ====================================
+     CLEAR OBJECTS
+  ==================================== */
+
+  function clearObjects() {
+
+    foods.forEach(
+      f=>f.el.remove()
+    );
+
+    scents.forEach(
+      s=>s.el.remove()
+    );
+
+    foods = [];
+    scents = [];
+
+    document.querySelectorAll(
+      ".healPop"
+    ).forEach(el=>el.remove());
+  }
+
+  /* ====================================
+     NEW GAME
+  ==================================== */
+
+  function startNewGame() {
+
+    level = 1;
+    lives = CFG.maxLives;
+
+    score = 0;
+    exp = 0;
+
+    startRound(true);
+  }
+
+  /* ====================================
+     START ROUND
+  ==================================== */
+
+  function startRound(isNewGame=false) {
+
+    clearTimeout(
+      nextLevelTimeout
+    );
+
+    nextLevelTimeout = null;
+
+    cancelAnimationFrame(raf);
+
+    clearObjects();
+
+    state = "PLAYING";
+
+    elapsed = 0;
+    panic = 0;
+    invincible = 0;
+
+    surgeTimer = 0;
+    surgeCooldown = 0;
+    calmTimer = 0;
+    motionSpeed = 0;
+
+    previousPointer = null;
+
+    fly = {
+      x:W*.5,
+      y:H*.82
+    };
+
+    target = {...fly};
+
+    if(isNewGame) {
+
+      lives = CFG.maxLives;
+
+      score = 0;
+      exp = 0;
+      level = 1;
+    }
+
+    $("time").textContent =
+      "30.0";
+
+    $("score").textContent =
+      score;
+
+    renderLife();
+    renderExp();
+    renderPanic();
+
+    flyEl.classList.remove(
+      "invincible"
+    );
+
+    mouthScene.classList.remove(
+      "active"
+    );
+
+    overlay.classList.remove(
+      "gameover"
+    );
+
+    screen.className =
+      "screen";
+
+    overlay.classList.add(
+      "hidden"
+    );
+
+    game.classList.remove(
+      "modal-open"
+    );
+
+    game.classList.add(
+      "playing"
+    );
+
+    // 먹이 11개
+
+    for(let i=0;i<CFG.foodCount;i++) {
+      spawnFood();
+    }
+
+    // 냄새 입자 28개
+
+    for(let i=0;i<CFG.scentCount;i++) {
+      spawnScent();
+    }
+
+    lastFrame =
+      performance.now();
+
+    raf =
+      requestAnimationFrame(
+        gameLoop
+      );
+  }
+
+  /* ====================================
+     MAIN GAME LOOP
+  ==================================== */
+
+  function gameLoop(now) {
+
+    if(state!=="PLAYING") {
+      return;
+    }
+
+    const dt = Math.min(
+      (now-lastFrame)/1000,
+      .035
+    );
+
+    lastFrame = now;
+
+    elapsed += dt;
+
+    const remaining = Math.max(
+      0,
+      CFG.duration-elapsed
+    );
+
+    $("time").textContent =
+      remaining.toFixed(1);
+
+    updateMovementState(dt);
+
+    invincible = Math.max(
+      0,
+      invincible-dt
+    );
+
+    if(invincible===0) {
+
+      flyEl.classList.remove(
+        "invincible"
+      );
+    }
+
+    updateFly(dt);
+
+    /* 파리지옥 충돌 */
+
+    if(hitsTrap(fly.x,fly.y)) {
+
+      takeDamage();
+
+      if(state!=="PLAYING") {
+        return;
+      }
+    }
+
+    /* 먹이 및 회복 */
+
+    updateFoods(dt);
+
+    /* 냄새 입자 */
+
+    updateScents(dt);
+
+    if(state!=="PLAYING") {
+      return;
+    }
+
+    /* 30초 생존 */
+
+    if(remaining<=0) {
+
+      clearLevel();
+
+      return;
+    }
+
+    raf =
+      requestAnimationFrame(
+        gameLoop
+      );
+  }
+
+  /* ====================================
+     RESIZE
+  ==================================== */
+
+  window.addEventListener(
+    "resize",
+    ()=>{
+
+      W = innerWidth;
+      H = innerHeight;
+
+      positionTrap();
+
+      fly.x = clamp(
+        fly.x,15,W-15
+      );
+
+      fly.y = clamp(
+        fly.y,15,H-15
+      );
+
+      target.x = clamp(
+        target.x,15,W-15
+      );
+
+      target.y = clamp(
+        target.y,15,H-15
+      );
+
+      for(const s of scents) {
+
+        s.goal =
+          randomRoamGoal(s);
+      }
+    }
+  );
+
+  /* ====================================
+     INITIALIZE
+  ==================================== */
+
+  $("startButton").onclick =
+    startNewGame;
+
+  renderLife();
+  renderExp();
+  renderPanic();
+
+  loadImages().then(
+    positionTrap
+  );
+
+  mainImage.addEventListener(
+    "load",
+    positionTrap
+  );
+
+})();
+</script>
+
+</body>
+</html>
